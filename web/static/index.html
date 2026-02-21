@@ -1,0 +1,1733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignSense - AI-Powered ASL Learning</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #FDFCFB;
+            --bg-secondary: #F7F5F3;
+            --bg-tertiary: #EDEAE6;
+            --text-primary: #1A1614;
+            --text-secondary: #5C5552;
+            --text-tertiary: #8A8583;
+            --accent-primary: #2D5A4A;
+            --accent-secondary: #E8B86D;
+            --accent-tertiary: #C75D4D;
+            --success: #2D5A4A;
+            --warning: #E8B86D;
+            --error: #C75D4D;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 30px 0 40px;
+            position: relative;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 2px;
+        }
+
+        .header-logo {
+            height: 50px;
+            margin-bottom: 12px;
+        }
+
+        header h1 {
+            font-family: 'Instrument Serif', Georgia, serif;
+            font-size: 3rem;
+            font-weight: 400;
+            color: var(--accent-primary);
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 35px;
+            padding: 8px;
+            background: var(--bg-secondary);
+            border-radius: 50px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tab-btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: transparent;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            background: rgba(45, 90, 74, 0.08);
+            color: var(--accent-primary);
+        }
+
+        .tab-btn.active {
+            background: var(--accent-primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(45, 90, 74, 0.3);
+        }
+
+        .tab-btn .icon {
+            font-size: 1.1rem;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Common Panel Styles */
+        .panel {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            border: 1px solid var(--bg-tertiary);
+            margin-bottom: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .panel:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .panel h3 {
+            font-family: 'Instrument Serif', Georgia, serif;
+            font-size: 1.3rem;
+            font-weight: 400;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel h3::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--accent-primary);
+            border-radius: 2px;
+        }
+
+        /* ==================== LEARN MODE ==================== */
+        .learn-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 900px) {
+            .learn-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Sign List */
+        .sign-list {
+            max-height: 520px;
+            overflow-y: auto;
+        }
+
+        .sign-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 18px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            margin-bottom: 8px;
+            background: var(--bg-secondary);
+            border: 2px solid transparent;
+        }
+
+        .sign-item:hover {
+            background: var(--bg-tertiary);
+            transform: translateX(4px);
+        }
+
+        .sign-item.selected {
+            background: rgba(45, 90, 74, 0.1);
+            border-color: var(--accent-primary);
+        }
+
+        .sign-item .sign-name {
+            font-weight: 600;
+            text-transform: uppercase;
+            flex: 1;
+            font-size: 0.9rem;
+            letter-spacing: 0.03em;
+            color: var(--text-primary);
+        }
+
+        .sign-item .mastery-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: var(--bg-tertiary);
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .sign-item .mastery-badge.mastered {
+            background: rgba(45, 90, 74, 0.15);
+            color: var(--accent-primary);
+        }
+
+        /* Search Input */
+        .search-input {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 2px solid var(--bg-tertiary);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: white;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        /* Sign Detail */
+        .sign-detail {
+            display: none;
+        }
+
+        .sign-detail.visible {
+            display: block;
+        }
+
+        .sign-title {
+            font-family: 'Instrument Serif', Georgia, serif;
+            font-size: 2.5rem;
+            font-weight: 400;
+            text-transform: uppercase;
+            margin-bottom: 25px;
+            color: var(--accent-primary);
+            letter-spacing: 0.02em;
+        }
+
+        .sign-demo-area {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: 20px;
+            padding: 50px;
+            text-align: center;
+            margin-bottom: 25px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--bg-tertiary);
+        }
+
+        .sign-demo-area .demo-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            filter: grayscale(0.2);
+        }
+
+        .sign-demo-area p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .sign-description {
+            font-size: 1.15rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            margin-bottom: 25px;
+        }
+
+        .sign-tips {
+            background: linear-gradient(135deg, rgba(232, 184, 109, 0.1) 0%, rgba(232, 184, 109, 0.05) 100%);
+            border-left: 4px solid var(--accent-secondary);
+            padding: 20px 25px;
+            border-radius: 0 16px 16px 0;
+            margin-bottom: 25px;
+        }
+
+        .sign-tips h4 {
+            color: var(--accent-secondary);
+            margin-bottom: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .sign-tips ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sign-tips li {
+            padding: 8px 0;
+            padding-left: 24px;
+            position: relative;
+            color: var(--text-secondary);
+        }
+
+        .sign-tips li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent-secondary);
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(45, 90, 74, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(45, 90, 74, 0.4);
+            background: #1d3d32;
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 2px solid var(--bg-tertiary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--text-tertiary);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* ==================== PRACTICE MODE ==================== */
+        .practice-container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+        }
+
+        @media (max-width: 1100px) {
+            .practice-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: var(--text-primary);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        #video, #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #video {
+            transform: scaleX(-1);
+        }
+
+        #canvas {
+            transform: scaleX(-1);
+            pointer-events: none;
+        }
+
+        .status-badge {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 18px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-badge.connecting {
+            background: rgba(232, 184, 109, 0.9);
+            color: #8B6914;
+        }
+        .status-badge.connecting::before { background: #8B6914; }
+
+        .status-badge.connected {
+            background: rgba(45, 90, 74, 0.9);
+            color: white;
+        }
+        .status-badge.connected::before { background: white; }
+
+        .status-badge.error {
+            background: rgba(199, 93, 77, 0.9);
+            color: white;
+        }
+        .status-badge.error::before { background: white; }
+
+        .prediction-overlay {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 20px 40px;
+            border-radius: 20px;
+            text-align: center;
+            min-width: 260px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .prediction-sign {
+            font-family: 'Instrument Serif', Georgia, serif;
+            font-size: 2rem;
+            font-weight: 400;
+            color: var(--accent-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .prediction-confidence {
+            font-size: 0.9rem;
+            color: var(--text-tertiary);
+            margin-top: 6px;
+            font-weight: 500;
+        }
+
+        .confidence-bar {
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+
+        .practice-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .practice-select {
+            padding: 14px 18px;
+            border-radius: 12px;
+            background: white;
+            color: var(--text-primary);
+            border: 2px solid var(--bg-tertiary);
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 160px;
+        }
+
+        .practice-select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        /* Target Sign Display */
+        .target-sign-display {
+            background: linear-gradient(135deg, rgba(45, 90, 74, 0.1) 0%, rgba(45, 90, 74, 0.05) 100%);
+            border: 2px solid rgba(45, 90, 74, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .target-sign-display .label {
+            font-size: 0.85rem;
+            color: var(--text-tertiary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 500;
+        }
+
+        .target-sign-display .sign-name {
+            font-family: 'Instrument Serif', Georgia, serif;
+            font-size: 1.8rem;
+            font-weight: 400;
+            color: var(--accent-primary);
+            text-transform: uppercase;
+        }
+
+        /* Feedback Panel */
+        .feedback-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            border: 1px solid var(--bg-tertiary);
+        }
+
+        .feedback-panel h3 {
+            font-family: 'Instrument Serif', Georgia, serif;
+            font-size: 1.3rem;
+            font-weight: 400;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .feedback-content {
+            min-height: 140px;
+        }
+
+        .feedback-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 16px 18px;
+            margin-bottom: 12px;
+            border-radius: 14px;
+            background: var(--bg-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .feedback-item:hover {
+            transform: translateX(4px);
+        }
+
+        .feedback-item .icon {
+            margin-right: 14px;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .feedback-item .text {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .feedback-item.success {
+            background: rgba(45, 90, 74, 0.1);
+            border-left: 4px solid var(--accent-primary);
+        }
+
+        .feedback-item.success .icon { color: var(--accent-primary); }
+        .feedback-item.success .text { color: var(--accent-primary); }
+
+        .feedback-item.tip {
+            background: rgba(232, 184, 109, 0.1);
+            border-left: 4px solid var(--accent-secondary);
+        }
+
+        .feedback-item.tip .icon { color: var(--accent-secondary); }
+
+        .feedback-item.warning {
+            background: rgba(199, 93, 77, 0.1);
+            border-left: 4px solid var(--accent-tertiary);
+        }
+
+        .feedback-item.warning .icon { color: var(--accent-tertiary); }
+
+        /* Component Scores */
+        .component-scores {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 20px;
+        }
+
+        .component-item {
+            background: var(--bg-secondary);
+            padding: 18px;
+            border-radius: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .component-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .component-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+
+        .component-name {
+            color: var(--text-secondary);
+            text-transform: capitalize;
+            font-weight: 500;
+        }
+
+        .component-value {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .component-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .component-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ==================== PROGRESS MODE ==================== */
+        .progress-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 35px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            border: 1px solid var(--bg-tertiary);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-card .stat-value {
+            font-family: 'Instrument Serif', Georgia, serif;
+            font-size: 3.5rem;
+            font-weight: 400;
+            color: var(--accent-primary);
+            line-height: 1;
+        }
+
+        .stat-card .stat-label {
+            color: var(--text-tertiary);
+            margin-top: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-size: 0.8rem;
+        }
+
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--bg-tertiary);
+            transition: all 0.2s ease;
+        }
+
+        .history-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .history-item .sign-name {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.03em;
+        }
+
+        .history-item .result {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .history-item .result.correct {
+            background: rgba(45, 90, 74, 0.1);
+            color: var(--accent-primary);
+        }
+
+        .history-item .result.incorrect {
+            background: rgba(199, 93, 77, 0.1);
+            color: var(--accent-tertiary);
+        }
+
+        .weak-area-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: rgba(232, 184, 109, 0.1);
+            border-radius: 14px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--accent-secondary);
+        }
+
+        .weak-area-item .sign-name {
+            text-transform: uppercase;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .weak-area-item .accuracy {
+            color: var(--accent-secondary);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* Utilities */
+        .text-center { text-align: center; }
+        .mt-20 { margin-top: 20px; }
+        .hidden { display: none !important; }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 50px 30px;
+            color: var(--text-tertiary);
+        }
+
+        .empty-state .icon {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            opacity: 0.4;
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            max-width: 280px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #1d3d32;
+        }
+
+        /* Focus styles */
+        *:focus-visible {
+            outline: 2px solid var(--accent-primary);
+            outline-offset: 2px;
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Full-width panel on progress page */
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        @media (min-width: 900px) {
+            .half-width {
+                grid-column: span 2;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <img src="/static/logo.svg" alt="SignSense" class="header-logo">
+            <p>Learn American Sign Language with Real-Time AI Feedback</p>
+        </header>
+
+        <!-- Tab Navigation -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="learn">
+                <span class="icon">📚</span>Learn
+            </button>
+            <button class="tab-btn" data-tab="practice">
+                <span class="icon">✋</span>Practice
+            </button>
+            <button class="tab-btn" data-tab="progress">
+                <span class="icon">📊</span>Progress
+            </button>
+        </nav>
+
+        <!-- ==================== LEARN MODE ==================== -->
+        <div id="learn-tab" class="tab-content active">
+            <div class="learn-container">
+                <!-- Sign List -->
+                <div class="panel">
+                    <h3>Sign Library</h3>
+                    <input type="text" id="sign-search" class="search-input" placeholder="Search signs...">
+                    <div class="sign-list" id="sign-list">
+                        <!-- Signs will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Sign Detail -->
+                <div class="sign-detail" id="sign-detail">
+                    <div class="panel">
+                        <h2 class="sign-title" id="detail-sign-name">SELECT A SIGN</h2>
+
+                        <div class="sign-demo-area">
+                            <div class="demo-icon" id="demo-icon">👋</div>
+                            <p id="demo-text">Select a sign from the list to see how it's performed</p>
+                        </div>
+
+                        <div class="sign-description" id="sign-description">
+                            <!-- Description will go here -->
+                        </div>
+
+                        <div class="sign-tips" id="sign-tips">
+                            <h4>Tips for this sign</h4>
+                            <ul id="tips-list">
+                                <li>Select a sign to see tips</li>
+                            </ul>
+                        </div>
+
+                        <div class="text-center mt-20">
+                            <button class="btn btn-primary" id="start-practice-btn" disabled>
+                                Start Practicing This Sign
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty state when no sign selected -->
+                <div class="panel" id="learn-empty-state">
+                    <div class="empty-state">
+                        <div class="icon">👈</div>
+                        <p>Select a sign from the library to learn how to perform it correctly</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PRACTICE MODE ==================== -->
+        <div id="practice-tab" class="tab-content">
+            <div class="practice-container">
+                <!-- Camera Area -->
+                <div>
+                    <div class="panel">
+                        <div class="video-container">
+                            <video id="video" playsinline></video>
+                            <canvas id="canvas"></canvas>
+                            <div class="status-badge connecting" id="status">Ready</div>
+                            <div class="prediction-overlay" id="prediction-overlay" style="display: none;">
+                                <div class="prediction-sign" id="prediction-sign">-</div>
+                                <div class="prediction-confidence" id="prediction-confidence">0%</div>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" id="confidence-fill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="practice-controls">
+                            <button class="btn btn-primary" id="start-btn">Start Camera</button>
+                            <button class="btn btn-primary" id="predict-btn" disabled>Predict Now</button>
+                            <button class="btn btn-secondary" id="clear-btn">Clear Buffer</button>
+                            <select id="practice-sign-select" class="practice-select">
+                                <option value="">Free Practice</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feedback Sidebar -->
+                <div>
+                    <!-- Target Sign -->
+                    <div class="target-sign-display" id="target-sign-display" style="display: none;">
+                        <div class="label">Currently practicing</div>
+                        <div class="sign-name" id="target-sign-name">-</div>
+                    </div>
+
+                    <!-- Main Feedback Panel -->
+                    <div class="feedback-panel">
+                        <h3>📝 Feedback</h3>
+                        <div class="feedback-content" id="feedback-content">
+                            <div class="empty-state">
+                                <p>Start the camera and make a sign to receive real-time feedback</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Component Scores -->
+                    <div class="panel" style="margin-top: 20px;">
+                        <h3>Component Analysis</h3>
+                        <div class="component-scores">
+                            <div class="component-item">
+                                <div class="component-header">
+                                    <span class="component-name">Handshape</span>
+                                    <span class="component-value" id="handshape-value">-</span>
+                                </div>
+                                <div class="component-bar">
+                                    <div class="component-fill" id="handshape-bar" style="width: 0%; background: var(--accent-primary);"></div>
+                                </div>
+                            </div>
+                            <div class="component-item">
+                                <div class="component-header">
+                                    <span class="component-name">Location</span>
+                                    <span class="component-value" id="location-value">-</span>
+                                </div>
+                                <div class="component-bar">
+                                    <div class="component-fill" id="location-bar" style="width: 0%; background: var(--accent-secondary);"></div>
+                                </div>
+                            </div>
+                            <div class="component-item">
+                                <div class="component-header">
+                                    <span class="component-name">Movement</span>
+                                    <span class="component-value" id="movement-value">-</span>
+                                </div>
+                                <div class="component-bar">
+                                    <div class="component-fill" id="movement-bar" style="width: 0%; background: var(--accent-tertiary);"></div>
+                                </div>
+                            </div>
+                            <div class="component-item">
+                                <div class="component-header">
+                                    <span class="component-name">Orientation</span>
+                                    <span class="component-value" id="orientation-value">-</span>
+                                </div>
+                                <div class="component-bar">
+                                    <div class="component-fill" id="orientation-bar" style="width: 0%; background: var(--text-secondary);"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PROGRESS MODE ==================== -->
+        <div id="progress-tab" class="tab-content">
+            <div class="progress-container">
+                <!-- Stats Cards -->
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-signs-learned">0</div>
+                    <div class="stat-label">Signs Learned</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-practice-sessions">0</div>
+                    <div class="stat-label">Practice Sessions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-accuracy">0%</div>
+                    <div class="stat-label">Overall Accuracy</div>
+                </div>
+
+                <!-- Practice History -->
+                <div class="panel half-width">
+                    <h3>Recent Practice History</h3>
+                    <div class="history-list" id="history-list">
+                        <div class="empty-state">
+                            <p>No practice history yet. Start practicing to track your progress!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weak Areas -->
+                <div class="panel">
+                    <h3>Areas to Improve</h3>
+                    <div id="weak-areas">
+                        <div class="empty-state">
+                            <p>Practice more signs to identify areas for improvement</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MediaPipe Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js" crossorigin="anonymous"></script>
+
+    <script>
+        // ==================== STATE ====================
+        let ws = null;
+        let camera = null;
+        let holistic = null;
+        let isRunning = false;
+        let selectedSign = null;
+        let targetSign = null;
+        let availableSigns = [];
+
+        // Progress tracking (persisted in localStorage)
+        let progress = JSON.parse(localStorage.getItem('signsense_progress')) || {
+            history: [],
+            signStats: {},
+            totalSessions: 0
+        };
+
+        // Sign information database
+        const SIGN_INFO = {
+            'book': {
+                description: 'Place both flat hands together, palms facing each other, then open them like opening a book.',
+                tips: ['Keep palms flat', 'Open hands symmetrically', 'Movement should be smooth'],
+                icon: '📖'
+            },
+            'drink': {
+                description: 'Form a C-shape with your hand and bring it to your mouth as if drinking from a cup.',
+                tips: ['Thumb and fingers form a C', 'Tilt hand slightly', 'Movement goes to mouth'],
+                icon: '🥤'
+            },
+            'eat': {
+                description: 'Bring a flat O hand (fingertips touching thumb) to your mouth repeatedly.',
+                tips: ['Fingertips touch thumb', 'Move toward mouth', 'Repeat 2-3 times'],
+                icon: '🍽️'
+            },
+            'help': {
+                description: 'Place a flat hand on top of a closed fist, then lift both hands up together.',
+                tips: ['Bottom hand is a fist', 'Top hand is flat', 'Lift upward together'],
+                icon: '🤝'
+            },
+            'thank you': {
+                description: 'Touch your chin with your fingertips, then move your hand outward and down.',
+                tips: ['Start at chin with flat hand', 'Move outward gracefully', 'Palm faces up as you move out'],
+                icon: '🙏'
+            },
+            'hello': {
+                description: 'Wave your open hand near your forehead, similar to a salute motion.',
+                tips: ['Hand is open and flat', 'Move from forehead outward', 'Like a friendly salute'],
+                icon: '👋'
+            },
+            'please': {
+                description: 'Rub your flat hand in a circle on your chest.',
+                tips: ['Hand is flat on chest', 'Circular motion', 'Expression matters'],
+                icon: '🙏'
+            },
+            'sorry': {
+                description: 'Make a fist and rub it in a circle on your chest.',
+                tips: ['Use a closed fist', 'Circular motion on chest', 'Show apologetic expression'],
+                icon: '😔'
+            },
+            'yes': {
+                description: 'Make a fist and nod it up and down, like your hand is nodding "yes".',
+                tips: ['Closed fist shape', 'Wrist bends up and down', 'Like a nodding head'],
+                icon: '✅'
+            },
+            'no': {
+                description: 'Extend your index and middle finger, then snap them against your thumb.',
+                tips: ['Use index and middle finger', 'Quick snapping motion', 'Fingers meet thumb'],
+                icon: '❌'
+            },
+            'default': {
+                description: 'Watch the demonstration carefully and practice the hand movements.',
+                tips: ['Pay attention to hand shape', 'Notice the location', 'Observe the movement pattern'],
+                icon: '✋'
+            }
+        };
+
+        // ==================== DOM ELEMENTS ====================
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const statusBadge = document.getElementById('status');
+        const startBtn = document.getElementById('start-btn');
+        const predictBtn = document.getElementById('predict-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const practiceSignSelect = document.getElementById('practice-sign-select');
+        const targetSignDisplay = document.getElementById('target-sign-display');
+        const targetSignName = document.getElementById('target-sign-name');
+        const predictionOverlay = document.getElementById('prediction-overlay');
+        const predictionSign = document.getElementById('prediction-sign');
+        const predictionConfidence = document.getElementById('prediction-confidence');
+        const confidenceFill = document.getElementById('confidence-fill');
+        const feedbackContent = document.getElementById('feedback-content');
+
+        // ==================== INITIALIZATION ====================
+        async function init() {
+            // Load available signs
+            try {
+                const response = await fetch('/api/signs');
+                const data = await response.json();
+                availableSigns = data.signs;
+                populateSignList();
+                populatePracticeSelect();
+            } catch (e) {
+                console.error('Failed to load signs:', e);
+            }
+
+            // Initialize MediaPipe Holistic
+            holistic = new Holistic({
+                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`
+            });
+
+            holistic.setOptions({
+                modelComplexity: 1,
+                smoothLandmarks: true,
+                enableSegmentation: false,
+                smoothSegmentation: false,
+                refineFaceLandmarks: false,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
+
+            holistic.onResults(onResults);
+
+            // Event listeners
+            setupEventListeners();
+            updateProgressDisplay();
+        }
+
+        function setupEventListeners() {
+            // Tab navigation
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+            });
+
+            // Learn mode
+            document.getElementById('sign-search').addEventListener('input', filterSigns);
+            document.getElementById('start-practice-btn').addEventListener('click', startPracticeFromLearn);
+
+            // Practice mode
+            startBtn.addEventListener('click', toggleCamera);
+            predictBtn.addEventListener('click', predictNow);
+            clearBtn.addEventListener('click', clearBuffer);
+            practiceSignSelect.addEventListener('change', onPracticeSignSelect);
+        }
+
+        // ==================== TAB NAVIGATION ====================
+        function switchTab(tabId) {
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabId);
+            });
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.toggle('active', content.id === `${tabId}-tab`);
+            });
+
+            // If switching to progress, update display
+            if (tabId === 'progress') {
+                updateProgressDisplay();
+            }
+        }
+
+        // ==================== LEARN MODE ====================
+        function populateSignList() {
+            const signList = document.getElementById('sign-list');
+            signList.innerHTML = availableSigns.sort().map(sign => {
+                const stats = progress.signStats[sign] || { attempts: 0, correct: 0 };
+                const mastered = stats.attempts >= 3 && (stats.correct / stats.attempts) >= 0.8;
+                return `
+                    <div class="sign-item ${selectedSign === sign ? 'selected' : ''}" data-sign="${sign}">
+                        <span class="sign-name">${sign}</span>
+                        ${mastered ? '<span class="mastery-badge mastered">Mastered</span>' : ''}
+                    </div>
+                `;
+            }).join('');
+
+            // Add click handlers
+            signList.querySelectorAll('.sign-item').forEach(item => {
+                item.addEventListener('click', () => selectSignToLearn(item.dataset.sign));
+            });
+        }
+
+        function filterSigns() {
+            const query = document.getElementById('sign-search').value.toLowerCase();
+            document.querySelectorAll('.sign-item').forEach(item => {
+                const sign = item.dataset.sign.toLowerCase();
+                item.style.display = sign.includes(query) ? 'flex' : 'none';
+            });
+        }
+
+        function selectSignToLearn(sign) {
+            selectedSign = sign;
+
+            // Update UI
+            document.querySelectorAll('.sign-item').forEach(item => {
+                item.classList.toggle('selected', item.dataset.sign === sign);
+            });
+
+            // Show detail panel
+            document.getElementById('learn-empty-state').style.display = 'none';
+            document.getElementById('sign-detail').classList.add('visible');
+
+            // Populate sign details
+            const info = SIGN_INFO[sign.toLowerCase()] || SIGN_INFO['default'];
+            document.getElementById('detail-sign-name').textContent = sign.toUpperCase();
+            document.getElementById('demo-icon').textContent = info.icon;
+            document.getElementById('demo-text').textContent = 'Practice this sign';
+            document.getElementById('sign-description').textContent = info.description;
+
+            const tipsList = document.getElementById('tips-list');
+            tipsList.innerHTML = info.tips.map(tip => `<li>${tip}</li>`).join('');
+
+            document.getElementById('start-practice-btn').disabled = false;
+        }
+
+        function startPracticeFromLearn() {
+            if (!selectedSign) return;
+
+            // Switch to practice tab
+            switchTab('practice');
+
+            // Set target sign
+            practiceSignSelect.value = selectedSign;
+            setTargetSign(selectedSign);
+
+            // Auto-start camera
+            if (!isRunning) {
+                startCamera();
+            }
+        }
+
+        // ==================== PRACTICE MODE ====================
+        function populatePracticeSelect() {
+            practiceSignSelect.innerHTML = '<option value="">Free Practice</option>' +
+                availableSigns.sort().map(sign =>
+                    `<option value="${sign}">${sign.toUpperCase()}</option>`
+                ).join('');
+        }
+
+        function onPracticeSignSelect(e) {
+            const sign = e.target.value || null;
+            setTargetSign(sign);
+        }
+
+        function setTargetSign(sign) {
+            targetSign = sign;
+            if (sign) {
+                targetSignDisplay.style.display = 'block';
+                targetSignName.textContent = sign.toUpperCase();
+                // Send to server
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ target_sign: sign }));
+                }
+            } else {
+                targetSignDisplay.style.display = 'none';
+            }
+        }
+
+        async function toggleCamera() {
+            if (isRunning) {
+                stopCamera();
+            } else {
+                await startCamera();
+            }
+        }
+
+        async function startCamera() {
+            try {
+                connectWebSocket();
+
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+
+                camera = new Camera(video, {
+                    onFrame: async () => {
+                        await holistic.send({ image: video });
+                    },
+                    width: 640,
+                    height: 480
+                });
+
+                await camera.start();
+                isRunning = true;
+                startBtn.textContent = 'Stop Camera';
+                updateStatus('Connected', 'connected');
+                predictionOverlay.style.display = 'block';
+
+            } catch (e) {
+                console.error('Failed to start camera:', e);
+                updateStatus('Camera Error', 'error');
+            }
+        }
+
+        function stopCamera() {
+            if (camera) {
+                camera.stop();
+                camera = null;
+            }
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+            isRunning = false;
+            startBtn.textContent = 'Start Camera';
+            updateStatus('Stopped', 'connecting');
+            predictionOverlay.style.display = 'none';
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+            ws.onopen = () => {
+                updateStatus('Connected', 'connected');
+                if (targetSign) {
+                    ws.send(JSON.stringify({ target_sign: targetSign }));
+                }
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handlePrediction(data);
+            };
+
+            ws.onclose = () => {
+                if (isRunning) {
+                    updateStatus('Reconnecting...', 'connecting');
+                    setTimeout(connectWebSocket, 1000);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                updateStatus('Error', 'error');
+            };
+        }
+
+        function predictNow() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ predict: true }));
+                predictBtn.disabled = true;
+            }
+        }
+
+        function clearBuffer() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ clear: true }));
+            }
+            feedbackContent.innerHTML = '<div class="empty-state"><p>Buffer cleared. Make a new sign!</p></div>';
+        }
+
+        function onResults(results) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw landmarks with updated colors
+            if (results.poseLandmarks) {
+                drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: '#2D5A4A', lineWidth: 2 });
+            }
+
+            if (results.leftHandLandmarks) {
+                drawConnectors(ctx, results.leftHandLandmarks, HAND_CONNECTIONS, { color: '#C75D4D', lineWidth: 3 });
+                drawLandmarks(ctx, results.leftHandLandmarks, { color: '#C75D4D', lineWidth: 1, radius: 4 });
+            }
+
+            if (results.rightHandLandmarks) {
+                drawConnectors(ctx, results.rightHandLandmarks, HAND_CONNECTIONS, { color: '#2D5A4A', lineWidth: 3 });
+                drawLandmarks(ctx, results.rightHandLandmarks, { color: '#2D5A4A', lineWidth: 1, radius: 4 });
+            }
+
+            // Send landmarks to server
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const landmarks = extractLandmarks(results);
+                if (landmarks) {
+                    ws.send(JSON.stringify({ landmarks }));
+                }
+            }
+        }
+
+        function extractLandmarks(results) {
+            const landmarks = [];
+
+            // Pose landmarks (33)
+            if (results.poseLandmarks) {
+                for (let i = 0; i < 33; i++) {
+                    const lm = results.poseLandmarks[i];
+                    landmarks.push([lm.x, lm.y, lm.z]);
+                }
+            } else {
+                for (let i = 0; i < 33; i++) landmarks.push([0, 0, 0]);
+            }
+
+            // Left hand (21)
+            if (results.leftHandLandmarks) {
+                for (let i = 0; i < 21; i++) {
+                    const lm = results.leftHandLandmarks[i];
+                    landmarks.push([lm.x, lm.y, lm.z]);
+                }
+            } else {
+                for (let i = 0; i < 21; i++) landmarks.push([0, 0, 0]);
+            }
+
+            // Right hand (21)
+            if (results.rightHandLandmarks) {
+                for (let i = 0; i < 21; i++) {
+                    const lm = results.rightHandLandmarks[i];
+                    landmarks.push([lm.x, lm.y, lm.z]);
+                }
+            } else {
+                for (let i = 0; i < 21; i++) landmarks.push([0, 0, 0]);
+            }
+
+            if (!results.leftHandLandmarks && !results.rightHandLandmarks) {
+                return null;
+            }
+
+            return landmarks;
+        }
+
+        // ==================== FEEDBACK HANDLING ====================
+        function handlePrediction(data) {
+            if (data.status === 'buffering') {
+                const progress = Math.round((data.frames / data.needed) * 100);
+                predictionSign.textContent = 'Recording...';
+                predictionConfidence.textContent = `${data.frames}/${data.needed} frames`;
+                confidenceFill.style.width = `${progress}%`;
+
+                predictBtn.disabled = !data.can_predict;
+                predictBtn.textContent = data.can_predict
+                    ? `Predict Now (${data.frames})`
+                    : `Need ${10 - data.frames} more`;
+                return;
+            }
+
+            if (data.status === 'prediction') {
+                // Update prediction display
+                const topPred = data.predictions[0];
+                predictionSign.textContent = topPred.sign.toUpperCase();
+                predictionConfidence.textContent = `${(topPred.confidence * 100).toFixed(0)}% confidence`;
+                confidenceFill.style.width = `${topPred.confidence * 100}%`;
+
+                // Update component scores
+                updateComponents(data.components);
+
+                // Display feedback
+                displayFeedback(data);
+
+                // Record in progress
+                recordAttempt(data);
+
+                // Reset predict button
+                predictBtn.disabled = true;
+                predictBtn.textContent = 'Predict Now';
+            }
+
+            if (data.status === 'error') {
+                displayFeedback({ feedback: [data.message], confidence: 0 });
+            }
+
+            if (data.status === 'cleared') {
+                feedbackContent.innerHTML = '<div class="empty-state"><p>Ready for next sign</p></div>';
+            }
+        }
+
+        function displayFeedback(data) {
+            const feedback = data.feedback || [];
+            const confidence = data.confidence || 0;
+            const topSign = data.top_sign || '';
+
+            let html = '';
+
+            // If practicing a specific sign, show match result
+            if (targetSign) {
+                const isCorrect = topSign.toLowerCase() === targetSign.toLowerCase();
+                if (isCorrect && confidence > 0.6) {
+                    html += `<div class="feedback-item success">
+                        <span class="icon">✓</span>
+                        <span class="text">Excellent! That's a perfect "${targetSign.toUpperCase()}"!</span>
+                    </div>`;
+                } else if (!isCorrect && topSign) {
+                    html += `<div class="feedback-item warning">
+                        <span class="icon">→</span>
+                        <span class="text">That looked like "${topSign.toUpperCase()}". Keep practicing "${targetSign.toUpperCase()}".</span>
+                    </div>`;
+                }
+            }
+
+            // Display all feedback messages from the server
+            feedback.forEach(msg => {
+                let type = 'tip';
+                let icon = '💡';
+
+                if (msg.includes('Excellent') || msg.includes('Great') || msg.includes('Good')) {
+                    type = 'success';
+                    icon = '✓';
+                } else if (msg.includes('Focus') || msg.includes('Check') || msg.includes('Adjust') ||
+                           msg.includes('Try') || msg.includes('Pay attention')) {
+                    type = 'tip';
+                    icon = '💡';
+                }
+
+                html += `<div class="feedback-item ${type}">
+                    <span class="icon">${icon}</span>
+                    <span class="text">${msg}</span>
+                </div>`;
+            });
+
+            if (!html) {
+                html = '<div class="feedback-item tip"><span class="icon">👍</span><span class="text">Keep practicing!</span></div>';
+            }
+
+            feedbackContent.innerHTML = html;
+        }
+
+        function updateComponents(componentData) {
+            const components = ['handshape', 'location', 'movement', 'orientation'];
+
+            components.forEach(comp => {
+                const valueEl = document.getElementById(`${comp}-value`);
+                const barEl = document.getElementById(`${comp}-bar`);
+
+                if (componentData && componentData[comp]) {
+                    const score = componentData[comp].score !== undefined
+                        ? componentData[comp].score
+                        : Math.min(componentData[comp].magnitude / 5, 1);
+
+                    const percentage = Math.round(score * 100);
+                    valueEl.textContent = `${percentage}%`;
+                    barEl.style.width = `${percentage}%`;
+
+                    // Color based on score
+                    if (score > 0.7) {
+                        barEl.style.background = 'var(--accent-primary)';
+                    } else if (score > 0.5) {
+                        barEl.style.background = 'var(--accent-secondary)';
+                    } else {
+                        barEl.style.background = 'var(--accent-tertiary)';
+                    }
+                } else {
+                    valueEl.textContent = '-';
+                    barEl.style.width = '0%';
+                }
+            });
+        }
+
+        function updateStatus(text, type) {
+            statusBadge.textContent = text;
+            statusBadge.className = `status-badge ${type}`;
+        }
+
+        // ==================== PROGRESS TRACKING ====================
+        function recordAttempt(data) {
+            const sign = targetSign || data.top_sign;
+            if (!sign) return;
+
+            const isCorrect = targetSign
+                ? data.top_sign?.toLowerCase() === targetSign.toLowerCase() && data.confidence > 0.5
+                : data.confidence > 0.7;
+
+            // Update history
+            progress.history.unshift({
+                sign: sign,
+                correct: isCorrect,
+                confidence: data.confidence,
+                timestamp: Date.now()
+            });
+
+            // Keep only last 100 entries
+            if (progress.history.length > 100) {
+                progress.history = progress.history.slice(0, 100);
+            }
+
+            // Update sign stats
+            if (!progress.signStats[sign]) {
+                progress.signStats[sign] = { attempts: 0, correct: 0 };
+            }
+            progress.signStats[sign].attempts++;
+            if (isCorrect) progress.signStats[sign].correct++;
+
+            progress.totalSessions++;
+
+            // Save to localStorage
+            localStorage.setItem('signsense_progress', JSON.stringify(progress));
+        }
+
+        function updateProgressDisplay() {
+            // Signs learned (>= 3 attempts with >= 80% accuracy)
+            const signsLearned = Object.values(progress.signStats).filter(
+                s => s.attempts >= 3 && (s.correct / s.attempts) >= 0.8
+            ).length;
+            document.getElementById('stat-signs-learned').textContent = signsLearned;
+
+            // Total sessions
+            document.getElementById('stat-practice-sessions').textContent = progress.totalSessions;
+
+            // Overall accuracy
+            const totalAttempts = progress.history.length;
+            const totalCorrect = progress.history.filter(h => h.correct).length;
+            const accuracy = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
+            document.getElementById('stat-accuracy').textContent = `${accuracy}%`;
+
+            // History list
+            const historyList = document.getElementById('history-list');
+            if (progress.history.length > 0) {
+                historyList.innerHTML = progress.history.slice(0, 20).map(h => `
+                    <div class="history-item">
+                        <span class="sign-name">${h.sign}</span>
+                        <span class="result ${h.correct ? 'correct' : 'incorrect'}">
+                            ${h.correct ? 'Correct' : 'Try Again'} (${Math.round(h.confidence * 100)}%)
+                        </span>
+                    </div>
+                `).join('');
+            }
+
+            // Weak areas (signs with < 50% accuracy and >= 2 attempts)
+            const weakAreas = Object.entries(progress.signStats)
+                .filter(([sign, stats]) => stats.attempts >= 2 && (stats.correct / stats.attempts) < 0.5)
+                .sort((a, b) => (a[1].correct / a[1].attempts) - (b[1].correct / b[1].attempts))
+                .slice(0, 5);
+
+            const weakAreasDiv = document.getElementById('weak-areas');
+            if (weakAreas.length > 0) {
+                weakAreasDiv.innerHTML = weakAreas.map(([sign, stats]) => {
+                    const acc = Math.round((stats.correct / stats.attempts) * 100);
+                    return `
+                        <div class="weak-area-item">
+                            <span class="sign-name">${sign}</span>
+                            <span class="accuracy">${acc}% (${stats.attempts} attempts)</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // ==================== START APP ====================
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
